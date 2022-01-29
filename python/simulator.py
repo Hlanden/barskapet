@@ -5,21 +5,23 @@ class Simulator:
     
     def __init__(self, buffer:mp.Queue):
         self.buffer = buffer
-        print("""
-        Welcome to the simulator!
+        print(
+            """
+            Welcome to the simulator!
 
-        This simulates the input from the arduino mounted in barskapet.
-        Control:
-            - [o]: Off
-            - [s]: Spotify
-            - [r]: Radio
-            - [n]: Next station/next playlist
-            - [h]: Previous song
-            - [p]: Play/pause
-            - [l]: Next song
-            - [j]: Volume down 1 %
-            - [k]: Volume up 1 %
-        """)
+            This simulates the input from the arduino mounted in barskapet.
+            Control:
+                - [o]: Off
+                - [s]: Spotify
+                - [r]: Radio
+                - [n]: Next station/next playlist
+                - [h]: Previous song
+                - [p]: Play/pause
+                - [l]: Next song
+                - [j]: Volume down 1 %
+                - [k]: Volume up 1 %
+            """
+        )
     
     def listen_to_inputs(self):
         fd = sys.stdin.fileno()
@@ -37,7 +39,7 @@ class Simulator:
                 try:
                     c = sys.stdin.read(1)
                     if c:
-                        print("Got character", repr(c))
+                        # print("Got character", repr(c))
                         self.buffer.put(c)
                 except IOError: pass
         finally:
