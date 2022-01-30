@@ -30,8 +30,7 @@ class RadioPlayer(PlayerInterface):
         self.idx = idx
         
     def kill_process(self):
-        if self.player_process.poll() is None:
-            self.player_process.kill()
+        os.system('pkill -9 mplayer')  
         
     def get_channels(self):
         channels = []
@@ -60,7 +59,7 @@ class RadioPlayer(PlayerInterface):
 
     def play_pause(self):
         if self.player_process.poll() is None:
-            self.player_process.kill()
+            os.system('pkill -9 mplayer')  
         else:
             if self.idx is not None:
                 self.set_playlist(self.idx)
