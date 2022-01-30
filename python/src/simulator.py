@@ -1,11 +1,11 @@
 import termios, fcntl, sys, os
 import multiprocessing as mp
-from enums import Command, Mode
+from src.enums import Command, Mode
 
 class Simulator:
     def __init__(self, buffer:mp.Queue):
         self.volume = 50
-        self.mode = 0
+        self.mode = Mode.NONE
 
         self.buffer = buffer
         print(
@@ -27,7 +27,7 @@ class Simulator:
             """
         )
     
-    def listen_to_keyboard_inputs(self):
+    def listen_to_inputs(self):
         fd = sys.stdin.fileno()
 
         oldterm = termios.tcgetattr(fd)
@@ -96,10 +96,10 @@ class Simulator:
         else:
             command = Command.NONE
 
-        msg = f'{self.mode},{command},{param}'
+        msg = [self.mode, command, param]
         self.send_commands(msg)
 
-    def send_commands(self, msg:str):
+    def send_commands(self, msg):
         self.buffer.put(msg)
 
 if __name__ == "__main__":
