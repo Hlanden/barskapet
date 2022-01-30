@@ -17,6 +17,7 @@ class RadioPlayer(PlayerInterface):
         self.number_of_channels = len(self.channels)
         # self.player_process = self.set_playlist(idx)
         self.player_process = None
+        self.idx = None
 
     def set_playlist(self, idx):
         if isinstance(self.player_process, sp.Popen):
@@ -27,6 +28,7 @@ class RadioPlayer(PlayerInterface):
             stdout=sp.PIPE,
             stderr=sp.STDOUT
         )
+        self.idx = idx
         
     def kill_process(self):
         if self.player_process.poll() is None:
@@ -58,7 +60,11 @@ class RadioPlayer(PlayerInterface):
         return None
 
     def play_pause(self):
-        return None
+        if self.player_process.poll() is None:
+            self.player_process.kill()
+        else:
+            if self.idx is not None:
+                self.set_playlist(self.idx)
 
 if __name__ == "__main__":
     print('start')
