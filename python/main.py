@@ -9,22 +9,16 @@ import time
 def main():
     use_sim = True
     buffer = mp.Queue(maxsize=10)
+
     controller = BarskapetController(buffer)
+    input_device = Simulator(buffer) #  if use_sim else None 
 
+    controller_process = mp.Process(target=controller.wait_for_commands, args=())
 
-    p = mp.Process(target=controller.listen_to_inputs, args=())
-    p.start()
+    controller_process.start()
+    input_device.listen_to_inputs()
 
-    if use_sim:
-        sim = Simulator(buffer)
-        sim.listen_to_inputs()
-        # p = mp.Process(target=sim.listen_to_inputs, args=())
-        # p.start()
-    else:
-        pass
-        # listen to serial inputs
-
-    p.join()
+    controller_process.join()
 
 if __name__ == "__main__":
     main()
