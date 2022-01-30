@@ -1,9 +1,28 @@
 import termios, fcntl, sys, os
 import multiprocessing as mp
+from enum import Enum
+
+class Mode(Enum):     
+    NONE              = 0
+    OFF               = 1
+    SPOTIFY           = 2
+    RADIO             = 3
+
+class Command(Enum):  
+    NONE              = 0
+    VOLUME_UP         = 1
+    VOLUME_DOWN       = 2
+    NEXT_SONG         = 3
+    PLAY_PAUSE        = 4
+    PREVIOUS_SONG     = 5
+    NEXT_CHANNEL      = 6
+    PREVIOUS_CHANNEL  = 7
 
 class Simulator:
-    
     def __init__(self, buffer:mp.Queue):
+        self.volume = 50
+        self.mode = 0
+
         self.buffer = buffer
         print(
             """
@@ -14,6 +33,7 @@ class Simulator:
                 - [o]: Off
                 - [s]: Spotify
                 - [r]: Radio
+                - [b]: Previous station/next playlist
                 - [n]: Next station/next playlist
                 - [h]: Previous song
                 - [p]: Play/pause
@@ -23,7 +43,7 @@ class Simulator:
             """
         )
     
-    def listen_to_inputs(self):
+    def listen_to_keyboard_inputs(self):
         fd = sys.stdin.fileno()
 
         oldterm = termios.tcgetattr(fd)
@@ -39,12 +59,64 @@ class Simulator:
                 try:
                     c = sys.stdin.read(1)
                     if c:
-                        # print("Got character", repr(c))
-                        self.buffer.put(c)
+                        self.generate_player_command(c)
                 except IOError: pass
         finally:
             termios.tcsetattr(fd, termios.TCSAFLUSH, oldterm)
             fcntl.fcntl(fd, fcntl.F_SETFL, oldflags)
+
+    def generate_player_command(self, keyboard_input:str):
+        command = Command.NONE
+        param = ''
+
+        ### MODES ###
+        # Off
+        if keyboard_input == 'o':
+            self.mode = Mode.OFF
+        # Spotify
+        elif keyboard_input == 's':
+            self.mode = Mode.SPOTIFY
+        # Radio
+        elif keyboard_input == 'r':
+            self.mode = Mode.RADIO
+
+        ### COMMANDS ###
+        # Previous station/next playlist
+        if keyboard_input == 'b':
+            command = Command.PREVIOUS_CHANNEL
+        # Next station/next playlist
+        elif keyboard_input == 'n':
+            command = Command.NEXT_CHANNEL
+        # Previous song
+        elif keyboard_input == 'h':
+            command = Command.PREVIOUS_SONG
+        # Play/pause
+        elif keyboard_input == 'p':
+            command = Command.PLAY_PAUSE
+        # Next song
+        elif keyboard_input == 'l':
+            command = Command.NEXT_SONG
+        # Volume down 1 %
+        elif keyboard_input == 'j':
+            command = Command.VOLUME_DOWN
+            if self.volume >= 1:
+                self.volume -= 1
+            param = self.volume
+        # Volume up 1 %
+        elif keyboard_input == 'k':
+            command = Command.VOLUME_UP
+            if self.volume <= 99:
+                self.volume += 1
+            param = self.volume
+        # None
+        else:
+            command = Command.NONE
+
+        msg = f'{self.mode},{command},{param}'
+        self.send_commands(msg)
+
+    def send_commands(self, msg:str):
+        self.buffer.put(msg)
 
 if __name__ == "__main__":
     buffer = mp.Queue()
