@@ -68,13 +68,13 @@ class Simulator:
         ### COMMANDS ###
         # Decrease channel percentage by 2
         if keyboard_input == 'b':
-            command = Command.PREVIOUS_CHANNEL
+            command = Command.CHANNEL_UPDATE
             if self.channel_percentage >= 1 and change_param:
                 self.channel_percentage -= 2
             param = self.channel_percentage
         # Increase channel percentage by 2
         elif keyboard_input == 'n':
-            command = Command.NEXT_CHANNEL
+            command = Command.CHANNEL_UPDATE
             if self.channel_percentage <= 99 and change_param:
                 self.channel_percentage += 2
             param = self.channel_percentage
@@ -89,13 +89,13 @@ class Simulator:
             command = Command.NEXT_SONG
         # Volume down 1 %
         elif keyboard_input == 'j':
-            command = Command.VOLUME_DOWN
+            command = Command.VOLUME_UPDATE
             if self.volume >= 1 and change_param:
                 self.volume -= 1
             param = self.volume
         # Volume up 1 %
         elif keyboard_input == 'k':
-            command = Command.VOLUME_UP
+            command = Command.VOLUME_UPDATE
             if self.volume <= 99 and change_param:
                 self.volume += 1
             param = self.volume

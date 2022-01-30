@@ -32,7 +32,7 @@ class BarskapetController:
         if mode != self.mode:
             self.update_mode(mode)
 
-        if command is Command.VOLUME_UP or command is Command.VOLUME_DOWN:
+        if command is Command.VOLUME_UPDATE:
             self.volume = int(params)
             self.update_volume()
 
@@ -43,7 +43,7 @@ class BarskapetController:
                 self.player.previous_song()
             elif command is Command.PLAY_PAUSE:
                 self.player.play_pause()
-            elif command is Command.PREVIOUS_CHANNEL or command is Command.NEXT_CHANNEL:
+            elif command is Command.CHANNEL_UPDATE:
                 self.update_channel(int(params))
 
     def update_mode(self, mode):
@@ -74,5 +74,5 @@ class BarskapetController:
                 self.set_playlist()
     
     def set_playlist(self):
-        print("Changing channel: {}, {}".format(self.index, self.player.number_of_channels))
+        print("Changing channel: {}".format(self.player.channels[self.index][0]))
         self.player.set_playlist(self.index)

@@ -22,9 +22,9 @@ class RadioPlayer(PlayerInterface):
         if isinstance(self.player_process, sp.Popen):
             self.kill_process()
         self.player_process = sp.Popen(
-            ['mplayer', '{}'.format(self.channels[idx][1])],
-            stdin=sp.PIPE,
-            stdout=sp.PIPE,
+            ['mplayer', '-cache', '8192', '{}'.format(self.channels[idx][1])],
+            stdin=sp.DEVNULL,
+            stdout=sp.DEVNULL,
             stderr=sp.STDOUT
         )
         self.idx = idx
