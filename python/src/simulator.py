@@ -5,6 +5,7 @@ from src.enums import Command, Mode
 class Simulator:
     def __init__(self, buffer:mp.Queue):
         self.volume = 50
+        self.channel_percentage = 50
         self.mode = Mode.NONE
 
         self.buffer = buffer
@@ -17,8 +18,8 @@ class Simulator:
                 - [o]: Off
                 - [s]: Spotify
                 - [r]: Radio
-                - [b]: Previous station/next playlist
-                - [n]: Next station/next playlist
+                - [b]: Decrease channel percentage by 2
+                - [n]: Increase channel percentage by 2
                 - [h]: Previous song
                 - [p]: Play/pause
                 - [l]: Next song
@@ -65,12 +66,18 @@ class Simulator:
             self.mode = Mode.RADIO
 
         ### COMMANDS ###
-        # Previous station/next playlist
+        # Decrease channel percentage by 2
         if keyboard_input == 'b':
             command = Command.PREVIOUS_CHANNEL
-        # Next station/next playlist
+            if self.channel_percentage >= 1:
+                self.channel_percentage -= 2
+            param = self.channel_percentage
+        # Increase channel percentage by 2
         elif keyboard_input == 'n':
             command = Command.NEXT_CHANNEL
+            if self.channel_percentage <= 99:
+                self.channel_percentage += 2
+            param = self.channel_percentage
         # Previous song
         elif keyboard_input == 'h':
             command = Command.PREVIOUS_SONG
