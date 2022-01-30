@@ -4,8 +4,8 @@ from src.enums import Command, Mode
 
 class Simulator:
     def __init__(self, buffer:mp.Queue):
-        self.volume = 50
-        self.channel_percentage = 50
+        self.volume = 20
+        self.channel_percentage = 100
         self.mode = Mode.NONE
 
         self.buffer = buffer
@@ -50,7 +50,7 @@ class Simulator:
             termios.tcsetattr(fd, termios.TCSAFLUSH, oldterm)
             fcntl.fcntl(fd, fcntl.F_SETFL, oldflags)
 
-    def generate_player_command(self, keyboard_input:str):
+    def generate_player_command(self, keyboard_input:str, change_param=True):
         command = Command.NONE
         param = ''
 
@@ -69,13 +69,13 @@ class Simulator:
         # Decrease channel percentage by 2
         if keyboard_input == 'b':
             command = Command.PREVIOUS_CHANNEL
-            if self.channel_percentage >= 1:
+            if self.channel_percentage >= 1 and change_param:
                 self.channel_percentage -= 2
             param = self.channel_percentage
         # Increase channel percentage by 2
         elif keyboard_input == 'n':
             command = Command.NEXT_CHANNEL
-            if self.channel_percentage <= 99:
+            if self.channel_percentage <= 99 and change_param:
                 self.channel_percentage += 2
             param = self.channel_percentage
         # Previous song
@@ -90,13 +90,13 @@ class Simulator:
         # Volume down 1 %
         elif keyboard_input == 'j':
             command = Command.VOLUME_DOWN
-            if self.volume >= 1:
+            if self.volume >= 1 and change_param:
                 self.volume -= 1
             param = self.volume
         # Volume up 1 %
         elif keyboard_input == 'k':
             command = Command.VOLUME_UP
-            if self.volume <= 99:
+            if self.volume <= 99 and change_param:
                 self.volume += 1
             param = self.volume
         # None

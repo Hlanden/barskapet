@@ -3,7 +3,13 @@ from src.simulator import Simulator
 from src.controller import BarskapetController
 import sys
 import time
-from threading import Timer
+from threading import Thread
+
+def send_status(sim):
+    while True:
+        sim.generate_player_command('n', False)
+        sim.generate_player_command('k', False)
+        time.sleep(1)
 
 def main():
     use_sim = True
@@ -15,8 +21,8 @@ def main():
     controller_process = mp.Process(target=controller.wait_for_commands, args=())
 
     if use_sim:
-        Timer(interval=1, function=input_device.generate_player_command, args=('r')).start()
-        Timer(interval=1.5, function=input_device.generate_player_command, args=('b')).start()
+        # Use to force initializing of values
+        Thread(target=send_status, args=(input_device,), daemon=True).start()
         
     controller_process.start()
     input_device.listen_to_inputs()

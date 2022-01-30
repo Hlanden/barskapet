@@ -15,7 +15,6 @@ class RadioPlayer(PlayerInterface):
     def __init__(self):
         self.channels = self.get_channels()
         self.number_of_channels = len(self.channels)
-        # self.player_process = self.set_playlist(idx)
         self.player_process = None
         self.idx = None
 

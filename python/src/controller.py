@@ -14,12 +14,10 @@ class BarskapetController:
         self.initialized = False
 
         self.mode = Mode.NONE 
-        self.volume = 10
+        self.volume = None
         self.index = None
         self.channel_percentage = None
 
-        self.update_volume()
-        
     def wait_for_commands(self):
         while True:
             msg = self.buffer.get()
@@ -38,15 +36,15 @@ class BarskapetController:
             self.volume = int(params)
             self.update_volume()
 
-        if self.mode is not Mode.NONE:
+        if self.mode is Mode.RADIO or self.mode is Mode.SPOTIFY:
             if command is Command.NEXT_SONG:
                 self.player.next_song()
             elif command is Command.PREVIOUS_SONG:
                 self.player.previous_song()
-            elif command is Command.PREVIOUS_CHANNEL or command is Command.NEXT_CHANNEL:
-                self.update_playlist(int(params))
             elif command is Command.PLAY_PAUSE:
                 self.player.play_pause()
+            elif command is Command.PREVIOUS_CHANNEL or command is Command.NEXT_CHANNEL:
+                self.update_channel(int(params))
 
     def update_mode(self, mode):
         if isinstance(self.player, PlayerInterface):
@@ -68,14 +66,13 @@ class BarskapetController:
         command = ["amixer", "-Mq" , "sset", "Headphone", "{}%".format(self.volume)]
         sp.Popen(command)
 
-    def update_playlist(self, channel_percentage):
-        if channel_percentage is not None:
+    def update_channel(self, channel_percentage):
+        if channel_percentage is not None and (self.mode is Mode.RADIO or self.mode is Mode.SPOTIFY):
             new_idx = int(channel_percentage*(self.player.number_of_channels - 1)/100)
-
             if self.index is None or new_idx != self.index:
                 self.index = new_idx
                 self.set_playlist()
-
+    
     def set_playlist(self):
         print("Changing channel: {}, {}".format(self.index, self.player.number_of_channels))
         self.player.set_playlist(self.index)
