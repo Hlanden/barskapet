@@ -1,41 +1,27 @@
 #include <FastLED.h>
 
+// DIN              
+#define  P_PREVIOUS_SONG  1
+#define  P_PLAY_PAUSE     2
+#define  P_NEXT_SONG      3
+#define  P_SPOTIFY        4
+#define  P_RADIO          5
 
-#define LED_PIN     12
-#define LED_PIN2    11
-#define NUM_LEDS    18
-#define BRIGHTNESS  50
-#define LED_TYPE    WS2811
-#define COLOR_ORDER GRB
-CRGB leds[NUM_LEDS]; //Leds for mode 
-CRGB leds2[NUM_LEDS]; //Leds for shelf
-CRGBPalette16 currentPalette;
-TBlendType    currentBlending;
-extern CRGBPalette16 myRedWhiteBluePalette;
-extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
+// AIN              
+#define  P_VOLUME         0
+#define  P_CHANNEL        5
 
-//Volume
-int measVol = 0;
-int vol = 0;
-int currentVol = -1;
-const int volumePin = A0;
+// DOUT             
+#define  P_LED_DATA_1     12
+#define  P_LED_DATA_2     11
 
+// LEDS:            
+#define  NUM_LEDS         18
+#define  BRIGHTNESS       50
+#define  LED_TYPE         WS2811
+#define  COLOR_ORDER      GRB
 
-//Playback
-const int prevPin = A1; 
-const int playPin = A2;
-const int nextPin = A3;
-
-//int playbackCounter = 0;
-int playbackEnabled = false;
-int currentPlaylist = 0;
-int plCounter = 0;
-long timeAvg = 0.0;
-
-//Mode
-const int spotifyPin = A4;
-const int radioPin = A5;
-int currentState = -1; 
+// COMMAND ENUM
 enum command {
 	NONE,
 	VOLUME_UPDATE,
@@ -44,8 +30,28 @@ enum command {
 	PREVIOUS_SONG,
 	CHANNEL_UPDATE
 };
-command current_command = NONE;
 
+// MODE ENUM
+enum command {
+	OFF,
+	SPOTIFY,
+	RADIO
+};
+
+// VARIABLES
+command  current_command  =  NONE;
+command  current_mode     =  NONE;
+
+// Volume
+int measVol = 0;
+int vol = 0;
+int currentVol = -1;
+
+// Playback
+int   playbackEnabled  =  false;
+int   currentPlaylist  =  0;
+int   plCounter        =  0;
+long  timeAvg          =  0.0;
 
 //LED inside shelf
 int ledState = 0;
@@ -53,49 +59,42 @@ const int ledPin = A7;
 int ledCounter = 0;
 int ledVal = 0;
 
-//Capasitor - NOT IN USE
-#define analogPin      2          // analog pin for measuring capacitor voltage
-#define chargePin      5         // pin to charge the capacitor - connected to one end of the charging resistor
-#define dischargePin   4         // pin to discharge the capacitor
-unsigned long startTime;
-unsigned long elapsedTime;
+//Mode                
+int currentState       = -1; 
 
-int spotifyState = 0;
-int change = 0; //Boolean for detected change
-//Id 1: MODE
-//ID 2: Playback control
-//ID 3: playlist
-//ID 4: Volume
-
+// LEDS CONFIG
+CRGB leds[NUM_LEDS]; //Leds for mode 
+CRGB leds2[NUM_LEDS]; //Leds for shelf
+CRGBPalette16 currentPalette;
+TBlendType    currentBlending;
+extern CRGBPalette16 myRedWhiteBluePalette;
+extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
 
 void setup() {
   Serial.begin(9600);
-  // put your setup code here, to run once:
-  pinMode(chargePin, OUTPUT);     // set chargePin to output
-  digitalWrite(chargePin, LOW); 
   
+  // LED SETUP
   delay( 3000 ); // power-up safety delay
   FastLED.setMaxPowerInVoltsAndMilliamps(5,800); 
-  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<LED_TYPE, LED_PIN2, COLOR_ORDER>(leds2, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<LED_TYPE, LED_DATA_1, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<LED_TYPE, LED_DATA_2, COLOR_ORDER>(leds2, NUM_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.setBrightness(  BRIGHTNESS );
   setAll(1);
-  
 }
 
 void loop() {
-  if(analogRead(spotifyPin) > 500 && currentState != 1) {
+  if(analogRead(P_SPOTIFY) > 500 && currentState != 1) {
     currentState = 1;
     int values[] = {currentState, 1, -1};
     printValues(values, 2);
     setAll(0);
     
-  } else if (analogRead(radioPin) > 500 && currentState != 2) {
+  } else if (analogRead(P_RADIO) > 500 && currentState != 2) {
     currentState = 2;
     int values[] = {currentState, 2, -1};
     printValues(values, 2);
     setAll(2);
-  } else if (analogRead(spotifyPin) < 500 && analogRead(radioPin) < 500 && currentState != 0){
+  } else if (analogRead(P_SPOTIFY) < 500 && analogRead(P_RADIO) < 500 && currentState != 0){
       currentState = 0;
       int values[] = {currentState, 1, -1};   
       printValues(values, 2);
@@ -118,7 +117,7 @@ void loop() {
     break;
   }
 
-  measVol = 100*(double)analogRead(volumePin)/(double)1024;
+  measVol = 100*(double)analogRead(P_VOLUME)/(double)1024;
   if (ledCounter < 20) {
     vol += measVol;
   }else{
@@ -155,11 +154,11 @@ void loop() {
 
 void getPlaybackControl(){
     int Pvalues[] = {currentState}; //ID2 is for playback
-    if (analogRead(playPin) > 100) { //Pause/play
+    if (analogRead(P_PLAY_PAUSE) > 100) { //Pause/play
       Pvalues[1] = 1;
-    } else if (analogRead(prevPin) > 100) { //Previous
+    } else if (analogRead(P_PREVIOUS_SONG) > 100) { //Previous
       Pvalues[1] = 0;
-    } else if(analogRead(nextPin) > 100){ //Next song
+    } else if(analogRead(P_NEXT_SONG) > 100){ //Next song
       Pvalues[1] = 2;
     } else {
       playbackEnabled = false;
