@@ -5,9 +5,11 @@ import sys
 from src.enums import Command, Mode
 from src.player_interface import PlayerInterface
 from src.radio_player import RadioPlayer
+from src.spotify_player import SpotifyPlayer, SpotifyClient
 
 class BarskapetController:
     def __init__(self, buffer:mp.Queue):
+        self.spotify_client = None
         self.player = None
 
         self.buffer = buffer
@@ -51,7 +53,8 @@ class BarskapetController:
             self.player.kill_process()
             
         if mode is Mode.SPOTIFY:
-            pass
+            self.spotify_client = SpotifyClient(username='jorgen1998')
+            self.player = SpotifyPlayer(self.spotify_client)
         elif mode is Mode.RADIO:
             self.player = RadioPlayer()
         elif mode is Mode.OFF or mode is Mode.NONE:
@@ -63,7 +66,7 @@ class BarskapetController:
         self.mode = mode
 
     def update_volume(self):
-        command = ["amixer", "-Mq" , "sset", "Headphone", "{}%".format(self.volume)]
+        command = ["amixer", "-Mq" , "sset", "Master", "{}%".format(self.volume)]
         sp.Popen(command)
 
     def update_channel(self, channel_percentage):
