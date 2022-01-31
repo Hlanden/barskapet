@@ -39,18 +39,7 @@ class PlaybackDevice:
         return '{} ({})'.format(self.name, self.type)
 
 class SpotifyClient(spotipy.Spotify):
-    def __init__(self, username, **kwargs):
-        self.username = username
-        self.token: str = ''
-
-        try:
-            self.token = self.get_token(self.username)
-            super().__init__(auth=self.token, **kwargs)
-        except Exception as e:
-            raise SpotifyInitException('Could not initialize spotify client: ' + str(e))
-        self.playback_devices = self.get_devices()
-        self.volume(100)
-
+    
     def _handle_spotify_exceptions(func):
         def wrapper(self, *args, **kwargs):
             try:
@@ -72,6 +61,24 @@ class SpotifyClient(spotipy.Spotify):
                     # result = func(self, *args, **kwargs)
             return result
         return wrapper
+
+    @_handle_spotify_exceptions
+    def __init__(self, username, **kwargs):
+        self.username = username
+        self.token: str = ''
+
+        try:
+            self.token = self.get_token(self.username)
+            super().__init__(auth=self.token, **kwargs)
+        except Exception as e:
+            raise SpotifyInitException('Could not initialize spotify client: ' + str(e))
+        self.playback_devices = self.get_devices()
+        print('Active devices: ', self.playback_devices)
+        for pd in self.playback_devices:
+            if str(pd).__contains__('barskapet'):
+                self.set_active_device(pd.id)
+                self.volume(100)
+                self.shuffle(state=True)
 
     def get_token(self, username:str):
         cache_dir=os.path.join(
@@ -136,7 +143,7 @@ class SpotifyClient(spotipy.Spotify):
     @_handle_spotify_exceptions
     def play_pause(self, **kwargs):
         try:
-            if self.is_playing()
+            if self.is_playing():
                 super().pause_playback(**kwargs)
             else:
                 super().start_playback(**kwargs)
