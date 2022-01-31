@@ -48,6 +48,7 @@ class SpotifyClient(spotipy.Spotify):
             super().__init__(auth=self.token, **kwargs)
         except Exception as e:
             raise SpotifyInitException('Could not initialize spotify client: ' + str(e))
+        self.playback_devices = self.get_devices()
 
     def _refresh_token_if_expired(func):
         def wrapper(self, *args, **kwargs):
@@ -56,6 +57,18 @@ class SpotifyClient(spotipy.Spotify):
             except SpotifyOauthError:
                 self.get_token(self.username)
                 result = func(self, *args, **kwargs)
+            except SpotifyException as e:
+                if e.http_status == 404:
+                    self.playback_devices = self.get_devices()
+                    # for pd in self.playback_devices:
+                    #     if str(pd) == 'barskapet':
+                    #         self.set_active_device(pd.id)
+                    #         result = func(self, *args, **kwargs)
+                    #         break
+
+                    # HARDCODED SOLUTION FOR TESTING PURPOSES
+                    self.set_active_device(self.playback_devices[1].id)
+                    result = func(self, *args, **kwargs)
             return result
         return wrapper
 
@@ -147,6 +160,10 @@ class SpotifyClient(spotipy.Spotify):
         playlists = [(p['name'], p['uri']) for p in spotify_playlists]
         return playlists
 
+    @_refresh_token_if_expired
+    def start_playlist(self, **kwargs):
+        self.start_playback(**kwargs)
+
 class SpotifyPlayer(PlayerInterface):
 
     def __init__(self, client:SpotifyClient):
@@ -181,7 +198,7 @@ class SpotifyPlayer(PlayerInterface):
         return self.client.pause_playback()
 
     def set_playlist(self, idx):
-        self.client.start_playback(context_uri=self.channels[idx][1])
+        self.client.start_playlist(context_uri=self.channels[idx][1])
         self.idx = idx
         
 if __name__=='__main__':

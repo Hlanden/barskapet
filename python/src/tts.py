@@ -11,7 +11,7 @@ modes = {
 
 
 def speak(sentence):
-    os.system('pkill -9 espeak')
+    os.system('pkill -9 espeak > /dev/null 2>&1')
     os.system('espeak -s 150 -a 200 "{}"'.format(sentence))
 
 def change_mode(mode):
