@@ -6,10 +6,12 @@ import time
 from threading import Thread
 
 def send_status(sim):
-    while True:
+    i = 0
+    while True and i < 9:
         sim.generate_player_command('n', False)
         sim.generate_player_command('k', False)
         time.sleep(1)
+        i += 1
 
 def main():
     use_sim = True

@@ -1,11 +1,13 @@
 import multiprocessing as mp
 import subprocess as sp
 import sys
+from threading import Thread
 
 from src.enums import Command, Mode
 from src.player_interface import PlayerInterface
 from src.radio_player import RadioPlayer
 from src.spotify_player import SpotifyPlayer, SpotifyClient
+import src.tts as tts
 
 class BarskapetController:
     def __init__(self, buffer:mp.Queue):
@@ -52,6 +54,7 @@ class BarskapetController:
         if isinstance(self.player, PlayerInterface):
             self.player.kill_process()
             
+        Thread(target=tts.change_mode, args=(mode,)).start()
         if mode is Mode.SPOTIFY:
             self.spotify_client = SpotifyClient(username='jorgen1998')
             self.player = SpotifyPlayer(self.spotify_client)
@@ -61,7 +64,7 @@ class BarskapetController:
             self.player = None
 
         if isinstance(self.player, PlayerInterface) and self.index is not None:
-            self.set_playlist()
+            self.set_playlist(wait_on_mode_tts=True)
 
         self.mode = mode
 
@@ -76,6 +79,6 @@ class BarskapetController:
                 self.index = new_idx
                 self.set_playlist()
     
-    def set_playlist(self):
-        print("Changing channel: {}".format(self.player.channels[self.index][0]))
+    def set_playlist(self, wait_on_mode_tts=False):
+        Thread(target=tts.change_channel, args=(self.player.channels[self.index][0],wait_on_mode_tts,)).start()
         self.player.set_playlist(self.index)
