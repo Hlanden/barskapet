@@ -7,7 +7,7 @@ from threading import Thread
 
 def send_status(sim):
     i = 0
-    while True and i < 9:
+    while True and i < 1:
         sim.generate_player_command('n', False)
         sim.generate_player_command('k', False)
         time.sleep(1)
