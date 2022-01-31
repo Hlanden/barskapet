@@ -60,15 +60,15 @@ class SpotifyClient(spotipy.Spotify):
             except SpotifyException as e:
                 if e.http_status == 404:
                     self.playback_devices = self.get_devices()
-                    # for pd in self.playback_devices:
-                    #     if str(pd) == 'barskapet':
-                    #         self.set_active_device(pd.id)
-                    #         result = func(self, *args, **kwargs)
-                    #         break
+                    for pd in self.playback_devices:
+                        if str(pd).__contains__('barskapet'):
+                            self.set_active_device(pd.id)
+                            result = func(self, *args, **kwargs)
+                            break
 
                     # HARDCODED SOLUTION FOR TESTING PURPOSES
-                    self.set_active_device(self.playback_devices[1].id)
-                    result = func(self, *args, **kwargs)
+                    # self.set_active_device(self.playback_devices[1].id)
+                    # result = func(self, *args, **kwargs)
             return result
         return wrapper
 

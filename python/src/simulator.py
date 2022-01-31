@@ -4,7 +4,7 @@ from src.enums import Command, Mode
 
 class Simulator:
     def __init__(self, buffer:mp.Queue):
-        self.volume = 20
+        self.volume = 50
         self.channel_percentage = 100
         self.mode = Mode.NONE
 

@@ -80,7 +80,7 @@ class BarskapetController:
         self.mode = mode
 
     def update_volume(self):
-        command = ["amixer", "-Mq" , "sset", "Master", "{}%".format(self.volume)]
+        command = ["amixer", "-Mq" , "sset", "Headphone", "{}%".format(self.volume)]
         sp.Popen(command)
 
     def update_index(self):
