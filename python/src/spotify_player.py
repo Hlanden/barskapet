@@ -73,11 +73,12 @@ class SpotifyClient(spotipy.Spotify):
         return wrapper
 
     def get_token(self, username:str):
-        cache_path=os.path.join(
+        cache_dir=os.path.join(
             os.path.abspath(dirname),
-            '.tokens/.cache-{}'.format(username)
+            '.tokens'
         )
-        Path(cache_path).mkdir(parents=True, exist_ok=True)
+        Path(cache_dir).mkdir(parents=True, exist_ok=True)
+        cache_path= os.path.join(cache_dir, '.cache-{}'.format(username))
         token = util.prompt_for_user_token(username,
             scope=('user-modify-playback-state '
                 'user-read-currently-playing '
@@ -203,7 +204,6 @@ class SpotifyPlayer(PlayerInterface):
         self.idx = idx
         
 if __name__=='__main__':
-    username = 'jorgen1998'
     sp = SpotifyClient(username=username)
     player = SpotifyPlayer(sp)
     #sp.play_for_time_duration()
