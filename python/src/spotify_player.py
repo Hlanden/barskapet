@@ -50,7 +50,7 @@ class SpotifyClient(spotipy.Spotify):
             raise SpotifyInitException('Could not initialize spotify client: ' + str(e))
         self.playback_devices = self.get_devices()
 
-    def _refresh_token_if_expired(func):
+    def _handle_spotify_exceptions(func):
         def wrapper(self, *args, **kwargs):
             try:
                 result = func(self, *args, **kwargs)
@@ -99,7 +99,7 @@ class SpotifyClient(spotipy.Spotify):
         )
         return token                                       
 
-    @_refresh_token_if_expired
+    @_handle_spotify_exceptions
     def get_devices(self):
         try:
             devices = [PlaybackDevice(**dev) for dev in self.devices()['devices']]
@@ -108,7 +108,7 @@ class SpotifyClient(spotipy.Spotify):
 
         return devices
 
-    @_refresh_token_if_expired
+    @_handle_spotify_exceptions
     def get_active_device(self):
         for dev in self.get_devices():
             if dev.is_active:
@@ -116,18 +116,18 @@ class SpotifyClient(spotipy.Spotify):
                 return dev
         return None
 
-    @_refresh_token_if_expired
+    @_handle_spotify_exceptions
     def set_active_device(self, device_id: str):
         try:
             super().transfer_playback(device_id=device_id)
         except SpotifyException as e:
             raise SetDeviceException('Coiuld not activate given device: ' + str(e))
 
-    @_refresh_token_if_expired
+    @_handle_spotify_exceptions
     def set_volume(self, vol):
         self.volume(vol)
 
-    @_refresh_token_if_expired
+    @_handle_spotify_exceptions
     def play_pause(self, **kwargs):
         try:
             super().pause_playback(**kwargs)
@@ -149,18 +149,18 @@ class SpotifyClient(spotipy.Spotify):
                 raise e
 
 
-    @_refresh_token_if_expired
+    @_handle_spotify_exceptions
     def get_current_volume(self):
         volume = self.current_playback()['device']['volume_percent']
         return volume
 
-    @_refresh_token_if_expired
+    @_handle_spotify_exceptions
     def get_playlists(self):
         spotify_playlists = self.current_user_playlists(limit=30)['items']
         playlists = [(p['name'], p['uri']) for p in spotify_playlists]
         return playlists
 
-    @_refresh_token_if_expired
+    @_handle_spotify_exceptions
     def start_playlist(self, **kwargs):
         self.shuffle(state=True)
         self.start_playback(**kwargs)
