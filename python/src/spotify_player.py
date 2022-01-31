@@ -49,6 +49,7 @@ class SpotifyClient(spotipy.Spotify):
         except Exception as e:
             raise SpotifyInitException('Could not initialize spotify client: ' + str(e))
         self.playback_devices = self.get_devices()
+        self.volume(100)
 
     def _handle_spotify_exceptions(func):
         def wrapper(self, *args, **kwargs):
