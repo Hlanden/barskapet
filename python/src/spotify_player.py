@@ -204,6 +204,7 @@ class SpotifyPlayer(PlayerInterface):
         self.idx = idx
         
 if __name__=='__main__':
+    username = 'jorgen-1998'
     sp = SpotifyClient(username=username)
     player = SpotifyPlayer(sp)
     #sp.play_for_time_duration()
