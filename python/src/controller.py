@@ -46,7 +46,7 @@ class BarskapetController:
                 is_changed = self.update_index()
                 if is_changed:
                     self.set_playlist()
-                    Thread(target=tts.change_channel, args=(self.player.channels[self.index][0],)).start()
+                    Thread(daemon=True, target=tts.change_channel, args=(self.player.channels[self.index][0],)).start()
 
 
         if self.mode is Mode.RADIO or self.mode is Mode.SPOTIFY:
@@ -61,7 +61,7 @@ class BarskapetController:
         if isinstance(self.player, PlayerInterface):
             self.player.kill_process()
             
-        tts_change_mode = Thread(target=tts.change_mode, args=(mode,))
+        tts_change_mode = Thread(daemon=True, target=tts.change_mode, args=(mode,))
         tts_change_mode.start()
         if mode is Mode.SPOTIFY:
             self.spotify_client = SpotifyClient(username='jorgen1998')
@@ -75,7 +75,7 @@ class BarskapetController:
             self.update_index()
             while tts_change_mode.is_alive():
                 time.sleep(0.1)
-            Thread(target=tts.change_channel, args=(self.player.channels[self.index][0],)).start()
+            Thread(daemon=True, target=tts.change_channel, args=(self.player.channels[self.index][0],)).start()
             self.set_playlist()
         self.mode = mode
 
