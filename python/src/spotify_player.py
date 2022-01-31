@@ -162,6 +162,7 @@ class SpotifyClient(spotipy.Spotify):
 
     @_refresh_token_if_expired
     def start_playlist(self, **kwargs):
+        self.shuffle(state=True)
         self.start_playback(**kwargs)
 
 class SpotifyPlayer(PlayerInterface):
@@ -195,7 +196,7 @@ class SpotifyPlayer(PlayerInterface):
         return self.client.play_pause()
         
     def kill_process(self):
-        return self.client.pause_playback()
+        return self.client.pause()
 
     def set_playlist(self, idx):
         self.client.start_playlist(context_uri=self.channels[idx][1])
