@@ -129,16 +129,23 @@ class SpotifyClient(spotipy.Spotify):
         self.volume(vol)
 
     @_handle_spotify_exceptions
+    def is_playing(self):
+        return self.current_playback()['is_playing']
+
+    @_handle_spotify_exceptions
     def play_pause(self, **kwargs):
         try:
-            super().pause_playback(**kwargs)
+            if self.is_playing()
+                super().pause_playback(**kwargs)
+            else:
+                super().start_playback(**kwargs)
         except spotipy.SpotifyException as e:
             if e.http_status == 403:
                 # Already paused
-                super().start_playback(**kwargs)
                 return
             else:
                 raise e
+
     def pause(self, **kwargs):
         try:
             super().pause_playback(**kwargs)
@@ -176,7 +183,6 @@ class SpotifyPlayer(PlayerInterface):
         self.idx = None
         self.playbackDevices = self.client.get_devices()
         self.active_device = self.client.get_active_device()
-        print('Playback devices: \n{}'.format(self.playbackDevices))
 
     def get_channels(self):
         return self.client.get_playlists()
@@ -207,5 +213,3 @@ if __name__=='__main__':
     username = 'jorgen-1998'
     sp = SpotifyClient(username=username)
     player = SpotifyPlayer(sp)
-    #sp.play_for_time_duration()
-    #sp.pause_playback()
