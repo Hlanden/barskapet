@@ -55,6 +55,9 @@ class SpotifyClient(spotipy.Spotify):
                             self.set_active_device(pd.id)
                             result = func(self, *args, **kwargs)
                             break
+                if e.http_status == 401:
+                    self.get_token(self.username)
+                    result = func(self, *args, **kwargs)
 
                     # HARDCODED SOLUTION FOR TESTING PURPOSES
                     # self.set_active_device(self.playback_devices[1].id)
