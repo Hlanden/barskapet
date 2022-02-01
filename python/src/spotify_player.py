@@ -1,18 +1,23 @@
+from dataclasses import dataclass
+from threading import Thread
 import os
+from pathlib import Path
+import time
+from typing import List
+
 import spotipy
 from spotipy.client import Spotify
 from spotipy.exceptions import SpotifyException
-import spotipy.util as util
 from spotipy.oauth2 import SpotifyOauthError
-from dataclasses import dataclass
-from typing import List
-import time
+import spotipy.util as util
+
+import src.tts as tts
 try:
     from src.player_interface import PlayerInterface
 except:
     from player_interface import PlayerInterface
 # from playlist import Playlist, Song
-from pathlib import Path
+
 
 dirname = os.path.dirname(__file__)
 
@@ -48,14 +53,21 @@ class SpotifyClient(spotipy.Spotify):
                 self.get_token(self.username)
                 result = func(self, *args, **kwargs)
             except SpotifyException as e:
+                result = False
                 if e.http_status == 404:
                     self.playback_devices = self.get_devices()
                     for pd in self.playback_devices:
                         if str(pd).__contains__('barskapet'):
                             self.set_active_device(pd.id)
+                            self.device_is_active = True
                             result = func(self, *args, **kwargs)
                             break
-                if e.http_status == 401:
+                    if self.device_is_active:
+                        Thread(target=tts.speak('No active spotify device found. Start spotify and try again')).start()
+                    self.device_is_active = False
+                    print('No active device found')
+
+                elif e.http_status == 401:
                     self.get_token(self.username)
                     result = func(self, *args, **kwargs)
 
@@ -69,6 +81,7 @@ class SpotifyClient(spotipy.Spotify):
     def __init__(self, username, **kwargs):
         self.username = username
         self.token: str = ''
+        self.device_is_active = True
 
         try:
             self.token = self.get_token(self.username)
@@ -79,10 +92,16 @@ class SpotifyClient(spotipy.Spotify):
         print('Active devices: ', self.playback_devices)
         for pd in self.playback_devices:
             if str(pd).__contains__('barskapet'):
+                self.device_is_active = True
                 self.set_active_device(pd.id)
                 self.volume(100)
                 self.shuffle(state=True)
+        if not self.device_is_active:
+            self.device_is_active = False
+            print('Barskapet is not active')
 
+
+    @_handle_spotify_exceptions
     def get_token(self, username:str):
         cache_dir=os.path.join(
             os.path.abspath(dirname),
@@ -90,7 +109,12 @@ class SpotifyClient(spotipy.Spotify):
         )
         Path(cache_dir).mkdir(parents=True, exist_ok=True)
         cache_path= os.path.join(cache_dir, '.cache-{}'.format(username))
-        token = util.prompt_for_user_token(username,
+
+        self.oauth_manager = spotipy.SpotifyOAuth(
+            client_id='d81b64e171bb48469b1be83e50810677',
+            client_secret='f9f297fb119148cc8b734d0e25a9f356',
+            redirect_uri='http://localhost:8080/',
+            cache_path=cache_path,
             scope=('user-modify-playback-state '
                 'user-read-currently-playing '
                 'user-read-playback-state '
@@ -104,11 +128,10 @@ class SpotifyClient(spotipy.Spotify):
                 'playlist-modify-private ',
                 'playlist-read-collaborative '
             ),
-            client_id='d81b64e171bb48469b1be83e50810677',
-            client_secret='f9f297fb119148cc8b734d0e25a9f356',
-            redirect_uri='http://localhost:8080/',
-            cache_path=cache_path
+            username=username,
+            show_dialog=False
         )
+        token = util.prompt_for_user_token(oauth_manager=self.oauth_manager)
         return token                                       
 
     @_handle_spotify_exceptions
@@ -129,7 +152,7 @@ class SpotifyClient(spotipy.Spotify):
         return None
 
     @_handle_spotify_exceptions
-    def set_active_device(self, device_id: str):
+    def set_active_device(self, device_id):
         try:
             super().transfer_playback(device_id=device_id)
         except SpotifyException as e:
@@ -157,6 +180,7 @@ class SpotifyClient(spotipy.Spotify):
             else:
                 raise e
 
+    @_handle_spotify_exceptions
     def pause(self, **kwargs):
         try:
             super().pause_playback(**kwargs)
@@ -184,6 +208,14 @@ class SpotifyClient(spotipy.Spotify):
         self.shuffle(state=True)
         self.start_playback(**kwargs)
 
+    @_handle_spotify_exceptions
+    def next(self):
+        self.next_track()
+
+    @_handle_spotify_exceptions
+    def previous(self):
+        self.previous_track()
+
 class SpotifyPlayer(PlayerInterface):
 
     def __init__(self, client:SpotifyClient):
@@ -196,7 +228,7 @@ class SpotifyPlayer(PlayerInterface):
         self.active_device = self.client.get_active_device()
 
     def get_channels(self):
-        return self.client.get_playlists()
+        self.client.get_playlists()
 
     def previous_channel(self):
         return None
@@ -205,16 +237,16 @@ class SpotifyPlayer(PlayerInterface):
         return None
         
     def previous_song(self):
-        return self.client.previous_track()
+        self.client.previous()
 
     def next_song(self):
-        return self.client.next_track()
+        self.client.next()
 
     def play_pause(self):
-        return self.client.play_pause()
+        self.client.play_pause()
         
     def kill_process(self):
-        return self.client.pause()
+        self.client.pause()
 
     def set_playlist(self, idx):
         self.client.start_playlist(context_uri=self.channels[idx][1])
