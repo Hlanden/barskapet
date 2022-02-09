@@ -44,12 +44,13 @@ enum enum_mode {
 enum_mode  current_mode =     OFF;
 
 // Volume
-const int numReadings = 10;
+const int numReadings   =      10;
 
 int volume_readings[numReadings];
 int  volume_read_index  =       0;
 int  total_volume       =       0;
 int  average            =       0;
+int  current_volume     =      -1;
 
 // LED inside shelf
 int  bar_led_state      =       0;
@@ -88,10 +89,10 @@ void setup() {
 	// LED SETUP
 	delay( 3000 ); // power-up safety delay
 	FastLED.setMaxPowerInVoltsAndMilliamps(5,800); 
-	FastLED.addLeds<LED_TYPE, LED_DATA_1, COLOR_ORDER>(mode_leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
-	FastLED.addLeds<LED_TYPE, LED_DATA_2, COLOR_ORDER>(bar_leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+	FastLED.addLeds<LED_TYPE, P_LED_DATA_1, COLOR_ORDER>(mode_leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+	FastLED.addLeds<LED_TYPE, P_LED_DATA_2, COLOR_ORDER>(bar_leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
 	FastLED.setBrightness(  BRIGHTNESS );
-	setModeLED(1);
+	setModeLED(OFF);
 }
 
 void loop() {
@@ -112,7 +113,7 @@ void updateModeState(){
 	if(digitalRead(P_SPOTIFY) && current_mode != SPOTIFY) {
 		current_mode = SPOTIFY;
 		int command[] = {current_mode};
-		sendSerialCommands(command, 2);
+		sendSerialCommands(command, 1);
 		// Is there any disadvantages of setting LEDs every cycle?
 		// If not, move this line after the if-statement:
 		setModeLED(current_mode);
@@ -120,13 +121,13 @@ void updateModeState(){
 	else if (digitalRead(P_RADIO) && current_mode != RADIO) {
 		current_mode = RADIO;
 		int command[] = {current_mode};
-		sendSerialCommands(command, 2);
+		sendSerialCommands(command, 1);
 		setModeLED(current_mode);
 	} 
 	else if (!digitalRead(P_SPOTIFY) && !digitalRead(P_RADIO) && current_mode != OFF){
 		current_mode = OFF;
 		int command[] = {current_mode};
-		sendSerialCommands(command, 2);
+		sendSerialCommands(command, 1);
 		setModeLED(current_mode);
 	}
 }
@@ -134,11 +135,11 @@ void updateModeState(){
 void updatePlaybackState(){
 	enum_command  current_command  =  NONE;
 	if (digitalRead(P_PREVIOUS_SONG)) { //Pause/play
-		current_command = PREVIOUS_SONG
+		current_command = PREVIOUS_SONG;
 	} else if (digitalRead(P_PLAY_PAUSE)) { //Previous
-		current_command = PLAY_PAUSE
+		current_command = PLAY_PAUSE;
 	} else if(digitalRead(P_NEXT_SONG)){ //Next song
-		current_command = NEXT_SONG
+		current_command = NEXT_SONG;
 	}
 
 	if (current_command != NONE && current_mode != OFF) {
@@ -153,7 +154,7 @@ void updateVolumeState(){
 	total_volume = total_volume - volume_readings[volume_read_index];
 	volume_readings[volume_read_index] = 100 * (double) analogRead(P_VOLUME) / (double) 1024;
 	total_volume = total_volume + volume_readings[volume_read_index];
-	volume_read_index = readIndex + 1;
+	volume_read_index = volume_read_index + 1;
 
 	// if we're at the end of the array...
 	if (volume_read_index >= numReadings) {
@@ -162,10 +163,10 @@ void updateVolumeState(){
 	// calculate the average:
 	average = total_volume / numReadings;
 
-	if (average < currentVol - 3 || average > currentVol + 3 || currentVol < 0){
-		currentVol = average; 
-		int command[] = {current_mode, VOLUME_UPDATE, currentVol};
-		sendSerialCommands(command, 2);
+	if (average < current_volume - 3 || average > current_volume + 3 || current_volume < 0){
+		current_volume = average; 
+		int command[] = {current_mode, VOLUME_UPDATE, current_volume};
+		sendSerialCommands(command, 3);
 	}
 
 }
@@ -173,7 +174,7 @@ void updateVolumeState(){
 void updateBarDoorState(){
 	if (digitalRead(P_DOOR_PIN)){
 		// Count the variable to add a delay to the light
-		if (led_counter < 10 000) {
+		if (led_counter < 10000) {
 			led_counter += 1;
 		}
 		else {
@@ -228,8 +229,7 @@ void turnOffBarLED() {
 	}
 }
 
-void sendSerialCommands(int command[]) {
-	int len = sizeof(command) / sizeof(int)
+void sendSerialCommands(int command[], int len) {
 	for (byte i = 0; i < len; i = i + 1) {
 		Serial.print(command[i]);
 		if(i != len-1) {
