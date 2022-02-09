@@ -1,20 +1,20 @@
 #include <FastLED.h>
 
 // DIN              
-#define  P_PREVIOUS_SONG  1
-#define  P_PLAY_PAUSE     2
-#define  P_NEXT_SONG      3
-#define  P_SPOTIFY        4
-#define  P_RADIO          5
-#define  P_DOOR_PIN       6
+#define  P_PREVIOUS_SONG  2
+#define  P_PLAY_PAUSE     3
+#define  P_NEXT_SONG      4
+#define  P_SPOTIFY        7
+#define  P_RADIO          8
+#define  P_DOOR_PIN       9
 
 // AIN              
 #define  P_VOLUME         0
-#define  P_CHANNEL        5
+#define  P_CHANNEL        1
 
 // DOUT             
-#define  P_LED_DATA_1     12
-#define  P_LED_DATA_2     11
+#define  P_LED_DATA_1     5
+#define  P_LED_DATA_2     6
 
 // LEDS            
 #define  NUM_LEDS         18
@@ -40,11 +40,14 @@ enum enum_mode {
 };
 
 // VARIABLES
+// Key repeat rate in milli seconds
+const int key_repeat_rate = 500;
+unsigned long previous_key_time = 0;
 // Mode
 enum_mode  current_mode =     OFF;
 
 // Volume
-const int numReadings   =      10;
+const int numReadings   =      20;
 
 int volume_readings[numReadings];
 int  volume_read_index  =       0;
@@ -134,13 +137,19 @@ void updateModeState(){
 
 void updatePlaybackState(){
 	enum_command  current_command  =  NONE;
-	if (digitalRead(P_PREVIOUS_SONG)) { //Pause/play
-		current_command = PREVIOUS_SONG;
-	} else if (digitalRead(P_PLAY_PAUSE)) { //Previous
-		current_command = PLAY_PAUSE;
-	} else if(digitalRead(P_NEXT_SONG)){ //Next song
-		current_command = NEXT_SONG;
-	}
+  if (millis() - previous_key_time > key_repeat_rate) {
+    if (digitalRead(P_PREVIOUS_SONG)) { //Pause/play
+    current_command = PREVIOUS_SONG;
+    previous_key_time = millis();
+  } else if (digitalRead(P_PLAY_PAUSE)) { //Previous
+    current_command = PLAY_PAUSE;
+    previous_key_time = millis();
+  } else if(digitalRead(P_NEXT_SONG)){ //Next song
+    current_command = NEXT_SONG;
+    previous_key_time = millis();
+  }
+  }
+	
 
 	if (current_command != NONE && current_mode != OFF) {
 		int command[] = {current_mode, current_command};
@@ -161,9 +170,10 @@ void updateVolumeState(){
 		volume_read_index = 0;
 	}
 	// calculate the average:
-	average = total_volume / numReadings;
+  // I have switched ground and 5V in the cabinet, so it needs to be inverted...
+	average = 100 - total_volume / numReadings;
 
-	if (average < current_volume - 3 || average > current_volume + 3 || current_volume < 0){
+	if (average < current_volume - 7 || average > current_volume + 7 || current_volume < 0){
 		current_volume = average; 
 		int command[] = {current_mode, VOLUME_UPDATE, current_volume};
 		sendSerialCommands(command, 3);
@@ -174,7 +184,7 @@ void updateVolumeState(){
 void updateBarDoorState(){
 	if (digitalRead(P_DOOR_PIN)){
 		// Count the variable to add a delay to the light
-		if (led_counter < 10000) {
+		if (led_counter < 5000) {
 			led_counter += 1;
 		}
 		else {
