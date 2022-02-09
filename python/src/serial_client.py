@@ -10,16 +10,16 @@ import time
 
 class SerialClient:
     def __init__(self, buffer:mp.Queue):
-        print(glob.glob("/dev/tty.usbmodem*"))
-        self.port = glob.glob("/dev/tty.usbmodem*")[0]
+        self.port = glob.glob("/dev/ttyUSB*")[0]
+        print('Connecting to: ', self.port)
         self.buffer = buffer
         self.ser = serial.Serial(port=self.port, baudrate=9600)
     
     def listen_to_inputs(self):
         data_str = ''
         while (True):
-            if (self.ser.in_waiting() > 0):
-                data_str += self.ser.read(self.ser.in_waiting()).decode('ascii') 
+            if (self.ser.inWaiting() > 0):
+                data_str += self.ser.read(self.ser.inWaiting()).decode('ascii') 
 
             if data_str.__contains__('\n'):
                 msg, data_str = data_str.split('\n', 1)
@@ -29,6 +29,10 @@ class SerialClient:
     
     def generate_player_command(self, cmd:str):
         commands = list(map(int, cmd.split(',')))
+
+        while len(commands) < 3:
+            commands.append(0)
+
         mode = Mode(commands[0])
         command = Command(commands[1])
         param = commands[2]
@@ -44,4 +48,5 @@ if __name__ == "__main__":
     test = [1,3,0]
 
     sim = SerialClient(buffer)
+    sim.listen_to_inputs()
 

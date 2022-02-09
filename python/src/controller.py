@@ -21,7 +21,7 @@ class BarskapetController:
         self.mode = Mode.NONE 
         self.volume = None
         self.index = None
-        self.channel_percentage = None
+        self.channel_percentage = 50 # Temporary
 
     def wait_for_commands(self):
         while True:

@@ -3,6 +3,12 @@ import multiprocessing as mp
 import os
 import subprocess as sp
 import time
+from threading import Thread
+
+try:
+    import src.tts as tts
+except:
+    import tts
 
 try:
     from src.player_interface import PlayerInterface
@@ -16,7 +22,7 @@ class RadioPlayer(PlayerInterface):
         self.channels = self.get_channels()
         self.number_of_channels = len(self.channels)
         self.player_process = None
-        self.idx = None
+        self.idx = int(self.number_of_channels / 2) # Temporary
 
     def set_playlist(self, idx):
         if isinstance(self.player_process, sp.Popen):
@@ -52,10 +58,16 @@ class RadioPlayer(PlayerInterface):
         return None
         
     def previous_song(self):
-        return None
+        # Temporary
+        self.idx = (self.idx - 1) % self.number_of_channels
+        self.set_playlist(self.idx)
+        Thread(daemon=True, target=tts.change_channel, args=(self.channels[self.idx][0],)).start()
 
     def next_song(self):
-        return None
+        # Temporary
+        self.idx = (self.idx + 1) % self.number_of_channels
+        self.set_playlist(self.idx)
+        Thread(daemon=True, target=tts.change_channel, args=(self.channels[self.idx][0],)).start()
 
     def play_pause(self):
         if self.player_process.poll() is None:

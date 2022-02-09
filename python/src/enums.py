@@ -1,10 +1,10 @@
 from enum import Enum
 
 class Mode(Enum):     
-    NONE                = 0
-    OFF                 = 1
-    SPOTIFY             = 2
-    RADIO               = 3
+    NONE                = -1
+    OFF                 = 0
+    SPOTIFY             = 1
+    RADIO               = 2
 class Command(Enum):    
     NONE                = 0
     VOLUME_UPDATE       = 1

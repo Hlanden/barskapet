@@ -1,6 +1,7 @@
 import multiprocessing as mp
 from src.simulator import Simulator
 from src.controller import BarskapetController
+from src.serial_client import SerialClient
 import sys
 import time
 from threading import Thread
@@ -14,11 +15,15 @@ def send_status(sim):
         i += 1
 
 def main():
-    use_sim = True
+    use_sim = False
     buffer = mp.Queue(maxsize=10)
 
     controller = BarskapetController(buffer)
-    input_device = Simulator(buffer) #  if use_sim else None 
+    if use_sim:
+        input_device = Simulator(buffer) #  if use_sim else None 
+    else:
+        input_device = SerialClient(buffer)
+
 
     controller_process = mp.Process(target=controller.wait_for_commands, args=())
 

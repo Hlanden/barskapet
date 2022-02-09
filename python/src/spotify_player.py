@@ -95,6 +95,7 @@ class SpotifyClient(spotipy.Spotify):
                 self.device_is_active = True
                 self.set_active_device(pd.id)
                 self.volume(100)
+                self.pause()
                 self.shuffle(state=True)
         if not self.device_is_active:
             self.device_is_active = False
@@ -223,7 +224,7 @@ class SpotifyPlayer(PlayerInterface):
         self.channels = client.get_playlists()
         self.number_of_channels = len(self.channels)
         self.player_process = None
-        self.idx = None
+        self.idx = int(self.number_of_channels / 2) # Temporary
         self.playbackDevices = self.client.get_devices()
         self.active_device = self.client.get_active_device()
 
